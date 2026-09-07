@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Magpie V3 — download</title>
+<meta name="description" content="Magpie for Mac and Windows. Every conversation you have, on every channel, in one place, so you communicate better and get where you were going." />
+<link rel="icon" href="favicon.svg" />
+
+<!--
+  The download page.
+
+  Two rules held it together:
+
+  1. IT READS FROM THE RELEASE, NOT FROM ME. Version, date and file size come
+     from the GitHub releases API at load, with the values below baked in as a
+     fallback. A download page whose version number is edited by hand is a page
+     that is wrong within a week, and being wrong about which build someone is
+     installing is the one thing it cannot afford.
+
+  2. IT SAYS WHAT WILL ACTUALLY HAPPEN. The Mac build is signed and notarized,
+     so it opens. The Windows build is not signed yet, so SmartScreen stops it,
+     and the page says so plainly with the exact click path rather than letting
+     an evaluator hit a scary blue box unwarned.
+
+  Colours are the app's own tokens (app/src/index.css), light and dark, so the
+  page and the product are visibly the same object. The accent IS the ink —
+  Magpie has no coloured accent, which is why the download button is black on
+  paper rather than the usual saturated pill.
+-->
+
+<style>
+  /* The product's faces, with a system fallback that keeps the same warmth if
+     the network is slow — the page must be legible before anything loads. */
+  @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Open+Sans:wght@400;500&display=swap");
+
+  :root {
+    --paper: hsl(40 16% 99%);
+    --ink: hsl(28 14% 17%);
+    --ink-soft: hsl(28 8% 42%);
+    --ink-faint: hsl(28 8% 58%);
+    --hairline: hsl(36 20% 89%);
+    --card: hsl(0 0% 100%);
+    --warn: hsl(32 95% 34%);
+    --shadow: 0 1px 2px hsl(28 14% 17% / 0.04), 0 8px 24px hsl(28 14% 17% / 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: hsl(30 9% 7%);
+      --ink: hsl(40 18% 92%);
+      --ink-soft: hsl(40 8% 65%);
+      --ink-faint: hsl(40 6% 50%);
+      --hairline: hsl(30 8% 20%);
+      --card: hsl(30 8% 11%);
+      --warn: hsl(32 85% 62%);
+      --shadow: 0 1px 2px hsl(0 0% 0% / 0.3), 0 8px 24px hsl(0 0% 0% / 0.25);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Open Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  h1, h2, h3, .mark-text { font-family: Poppins, ui-sans-serif, system-ui, sans-serif; }
+
+  /* ── masthead ─────────────────────────────────────────────────────────── */
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 64px; }
+  .mark { width: 30px; height: 30px; border-radius: 8px; flex: none; }
+  .mark-text { font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
+
+  /* ── hero ─────────────────────────────────────────────────────────────── */
+  h1 {
+    font-size: clamp(30px, 5.2vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .lede { font-size: 17px; color: var(--ink-soft); margin: 0 0 40px; max-width: 52ch; }
+
+  /* ── the download cards ───────────────────────────────────────────────── */
+  .downloads { display: grid; gap: 12px; margin-bottom: 14px; }
+
+  .dl {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    background: var(--card);
+    color: inherit;
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .dl:hover { border-color: hsl(28 14% 17% / 0.28); transform: translateY(-1px); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .dl:hover { border-color: hsl(40 18% 92% / 0.3); }
+  }
+  .dl:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  .dl svg { flex: none; width: 26px; height: 26px; opacity: 0.85; }
+  .dl-body { flex: 1; min-width: 0; }
+  .dl-title { font-family: Poppins, sans-serif; font-weight: 500; font-size: 16px; }
+  .dl-meta { font-size: 13px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .dl-go { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+
+  /* The platform you are not on is quieter, but never hidden — someone
+     downloading for a colleague's machine is a normal thing to be doing. */
+  .dl.secondary { background: transparent; box-shadow: none; }
+
+  /* Not a download, and it must not behave like one. Rendered as a div rather
+     than an anchor, so there is nothing to click, nothing to focus and nothing
+     to right-click into a new tab. The lift and the border change on hover are
+     cancelled for the same reason: a card that moves under the cursor is
+     promising something will happen. */
+  .dl.pending { background: transparent; box-shadow: none; cursor: default; }
+  .dl.pending:hover { border-color: var(--hairline); transform: none; }
+  .dl.pending svg { opacity: 0.45; }
+  .dl.pending .dl-title { color: var(--ink-soft); }
+
+  .dl-soon {
+    flex: none;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 3px 9px;
+    white-space: nowrap;
+  }
+
+  .version-line {
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 56px;
+  }
+
+  /* ── sections ─────────────────────────────────────────────────────────── */
+  section { margin-bottom: 48px; }
+  h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-weight: 600;
+    color: var(--ink-faint);
+    margin: 0 0 16px;
+  }
+  h3 { font-size: 16px; font-weight: 500; margin: 0 0 6px; }
+  p { margin: 0 0 14px; }
+  .whats-new p { color: var(--ink-soft); }
+  .whats-new strong { color: var(--ink); font-weight: 500; }
+
+  .note {
+    border-left: 2px solid var(--hairline);
+    padding-left: 18px;
+    margin-bottom: 22px;
+  }
+  .note.caution { border-left-color: var(--warn); }
+  .note p { color: var(--ink-soft); margin-bottom: 6px; }
+  .note kbd {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12.5px;
+    background: var(--hairline);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink);
+  }
+
+  /* ── the timeline ─────────────────────────────────────────────────────── */
+  /* One rule down the left, a node per release. The line is on the list and
+     the dots sit on top of it, so a release can be any height without the
+     spine breaking or needing a fixed row. */
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 22px;
+    border-left: 1px solid var(--hairline);
+  }
+  .timeline li { position: relative; padding-bottom: 26px; }
+  .timeline li:last-child { padding-bottom: 0; }
+  .timeline li::before {
+    content: "";
+    position: absolute;
+    left: -27px;
+    top: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1.5px solid var(--ink-faint);
+  }
+  /* The newest release is the one you are about to install, so it is the only
+     filled dot — the rest are history. */
+  .timeline li:first-child::before { background: var(--ink); border-color: var(--ink); }
+  .tl-version {
+    font-family: Poppins, sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tl-date { font-size: 12.5px; color: var(--ink-faint); margin-left: 8px; }
+  .timeline p { margin: 4px 0 0; color: var(--ink-soft); font-size: 14.5px; }
+
+  footer {
+    border-top: 1px solid var(--hairline);
+    padding-top: 22px;
+    font-size: 13px;
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+  }
+  footer a { color: var(--ink-soft); }
+  a { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="mark" viewBox="0 0 256 256" aria-hidden="true">
+      <rect width="256" height="256" rx="60" fill="hsl(28 12% 13%)" />
+      <g transform="translate(38 38) scale(0.7)" fill="hsl(40 33% 99%)" fill-rule="evenodd">
+        <path d="M236.44,73.34,213.21,57.86A60,60,0,0,0,156,16h-.29C122.79,16.16,96,43.47,96,76.89V96.63L11.63,197.88l-.1.12A16,16,0,0,0,24,224h88A104.11,104.11,0,0,0,216,120V100.28l20.44-13.62a8,8,0,0,0,0-13.32ZM126.15,133.12l-60,72a8,8,0,1,1-12.29-10.24l60-72a8,8,0,1,1,12.29,10.24ZM164,80a12,12,0,1,1,12-12A12,12,0,0,1,164,80Z" />
+      </g>
+    </svg>
+    <span class="mark-text">Magpie V3</span>
+  </header>
+
+  <h1>Communicate better. Get where you were going.</h1>
+  <p class="lede">
+    Magpie is one place for everyone you talk to, on whatever they use to reach
+    you, and for your whole life rather than only the working part of it. It
+    keeps track of what you said you would do, who is waiting on you, and what
+    you are trying to get to, so conversations carry things forward instead of
+    burying them. Magpie V3 is the next desktop app, shipping alongside Magpie.app during beta.
+  </p>
+
+  <div class="downloads" id="downloads">
+    <a class="dl" id="dl-mac" href="https://github.com/fly-magpie/magpie-v3-desktop-releases/releases/latest">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.36 12.72c-.02-2.2 1.8-3.26 1.88-3.31-1.02-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.8-3.33.8-.69 0-1.75-.78-2.87-.76-1.48.02-2.84.86-3.6 2.18-1.53 2.66-.39 6.6 1.1 8.76.73 1.06 1.6 2.25 2.74 2.2 1.1-.04 1.51-.71 2.84-.71s1.7.71 2.87.69c1.18-.02 1.93-1.08 2.65-2.14.84-1.23 1.18-2.42 1.2-2.48-.03-.01-2.3-.88-2.3-3.51zM14.2 6.1c.6-.74 1.01-1.76.9-2.78-.87.04-1.93.58-2.55 1.31-.56.65-1.05 1.69-.92 2.68.97.08 1.96-.49 2.57-1.21z"/></svg>
+      <span class="dl-body">
+        <span class="dl-title">Download for Mac</span><br />
+        <span class="dl-meta" id="mac-meta">Apple silicon and Intel · signed and notarized</span>
+      </span>
+      <span class="dl-go">.dmg →</span>
+    </a>
+
+    <a class="dl secondary" id="dl-win" href="https://github.com/fly-magpie/magpie-v3-desktop-releases/releases/latest">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.2-1v6.7H3V5.5zm0 13l7.2 1v-6.6H3v5.6zm8.3 1.2L21 21V12.2h-9.7v7.5zM11.3 3v7.2H21V2l-9.7 1z"/></svg>
+      <span class="dl-body">
+        <span class="dl-title">Download for Windows</span><br />
+        <span class="dl-meta" id="win-meta">64-bit · not code-signed yet, see below</span>
+      </span>
+      <span class="dl-go">.exe →</span>
+    </a>
+
+    <!-- A div, not an anchor: there is nothing to download yet, and a link that
+         goes nowhere is worse than a line of text that says so. No date, because
+         we do not have one to keep.
+
+         The App Store mark rather than the Apple one. There is no "iOS" glyph in
+         any icon set, because iOS has no mark of its own -- the candidates are
+         Apple (the platform), App Store (the storefront) and a phone silhouette.
+         Apple would repeat the Mac card's glyph two rows up, and the storefront
+         is the more useful of the two anyway: it says where the app will come
+         from, which is exactly what "coming soon" is about. -->
+    <div class="dl pending">
+      <!-- Phosphor AppStoreLogo, fill weight, so it reads solid next to the Apple
+           and Windows marks. Its own 256 viewBox, not the 24 the others use --
+           rescaling the path by hand would only introduce rounding error. -->
+      <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M64.34,196.07l-9.45,16a8,8,0,1,1-13.78-8.14l9.46-16a8,8,0,1,1,13.77,8.14ZM232,152H184.2l-30.73-52a8,8,0,1,0-13.77,8.14l61.41,103.93a8,8,0,0,0,13.78-8.14L193.66,168H232a8,8,0,0,0,0-16Zm-89.53,0H90.38L158.89,36.07a8,8,0,0,0-13.78-8.14L128,56.89l-17.11-29a8,8,0,1,0-13.78,8.14l21.6,36.55L71.8,152H24a8,8,0,0,0,0,16H142.47a8,8,0,1,0,0-16Z"/></svg>
+      <span class="dl-body">
+        <span class="dl-title">Magpie on iOS</span><br />
+        <span class="dl-meta">The same conversations, in your pocket</span>
+      </span>
+      <span class="dl-soon">Coming soon</span>
+    </div>
+  </div>
+
+  <!-- Baked in so the page is never blank or wrong before the fetch lands; the
+       script replaces it with whatever the latest release actually says. -->
+  <p class="version-line" id="version-line">Version 0.1.0-beta.1 · 7 September 2026</p>
+
+  <!-- Three lines, not a feature grid. The page's job is to get someone to the
+       right file; this is only here so they know what they are installing. -->
+  <section>
+    <h2>What it is for</h2>
+    <div class="note">
+      <h3>Everyone, in one place</h3>
+      <p>Every channel you talk on, read as one set of conversations with the
+        history that belongs to each person, instead of one app per network and
+        you doing the joining up.</p>
+    </div>
+    <div class="note">
+      <h3>Nothing dropped between you</h3>
+      <p>What you promised, what you are owed, and who has gone quiet. Magpie
+        keeps the thread of it so you do not have to hold it in your head.</p>
+    </div>
+    <div class="note">
+      <h3>Pointed at what you are trying to do</h3>
+      <p>What you are working towards sits alongside the conversations that move
+        it, so talking to people is how things advance rather than what
+        interrupts them.</p>
+    </div>
+  </section>
+
+  <!--
+    The timeline builds itself from the releases, for the same reason the
+    version line does: a history maintained by hand is a history that stops
+    being updated the first busy week. The node below is the fallback, correct
+    at publish time, and the script replaces the list with what the repo
+    actually holds.
+  -->
+  <section class="whats-new">
+    <h2>What's changed</h2>
+    <ol class="timeline" id="timeline">
+      <li>
+        <span class="tl-version">1.0.0-beta.13</span>
+        <span class="tl-date">15 August 2026</span>
+        <p>
+          Ideas have somewhere to live, Home keeps itself up to date as things
+          happen, and Just arrived is one stack with the newest message on top.
+        </p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Opening it the first time</h2>
+
+    <div class="note">
+      <h3>On a Mac</h3>
+      <p>
+        Open the .dmg, drag Magpie V3 to Applications, and open it. It is signed
+        with our Developer ID and notarized by Apple, so there is no warning to
+        click through. After that it updates itself.
+      </p>
+    </div>
+
+    <div class="note caution">
+      <h3>On Windows</h3>
+      <p>
+        Windows will stop the installer with <em>"Windows protected your PC"</em>.
+        That is expected: the build is not code-signed yet. Click
+        <kbd>More info</kbd>, then <kbd>Run anyway</kbd>.
+      </p>
+      <p>
+        Signing needs a certificate whose key lives on dedicated hardware, which
+        is a purchase and a company verification we have not done yet. Until
+        then the Windows build also does not update itself — come back here for
+        a new one.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Private beta. You will need an invited account to sign in.</span>
+    <a href="https://github.com/fly-magpie/magpie-v3-desktop-releases/releases">All releases</a>
+  </footer>
+</div>
+
+<script>
+/*
+ * Fill in the truth from the latest release.
+ *
+ * Everything above is a fallback that was correct when the page was published;
+ * this replaces it with what the release actually holds, so the page cannot
+ * drift as new builds go out. It fails silently and on purpose — a rate-limited
+ * API (60/hour per IP, unauthenticated) must leave a working page behind, not
+ * an error where the download button was.
+ */
+(function () {
+  var REPO = "fly-magpie/magpie-v3-desktop-releases";
+
+  // Put the platform you are on first. Nothing is hidden either way —
+  // downloading for someone else's machine is a normal thing to be doing.
+  var isWindows = /Windows/i.test(navigator.userAgent);
+  if (isWindows) {
+    var box = document.getElementById("downloads");
+    var mac = document.getElementById("dl-mac");
+    var win = document.getElementById("dl-win");
+    box.insertBefore(win, mac);
+    win.classList.remove("secondary");
+    mac.classList.add("secondary");
+  }
+
+  function size(bytes) {
+    return (bytes / 1048576).toFixed(1) + " MB";
+  }
+
+  fetch("https://api.github.com/repos/" + REPO + "/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (rel) {
+      var assets = rel.assets || [];
+      var dmg = assets.filter(function (a) { return /\.dmg$/i.test(a.name); })[0];
+      var exe = assets.filter(function (a) { return /\.exe$/i.test(a.name); })[0];
+
+      var when = new Date(rel.published_at).toLocaleDateString(undefined, {
+        day: "numeric", month: "long", year: "numeric",
+      });
+      document.getElementById("version-line").textContent =
+        "Version " + rel.tag_name.replace(/^v/, "") + " · " + when;
+
+      if (dmg) {
+        document.getElementById("dl-mac").href = dmg.browser_download_url;
+        document.getElementById("mac-meta").textContent =
+          "Apple silicon and Intel · signed and notarized · " + size(dmg.size);
+      }
+
+      // No Windows asset attached to this release yet — say so rather than
+      // handing someone a link to a page with no .exe on it.
+      var winCard = document.getElementById("dl-win");
+      if (exe) {
+        winCard.href = exe.browser_download_url;
+        document.getElementById("win-meta").textContent =
+          "64-bit · not code-signed yet, see below · " + size(exe.size);
+      } else {
+        document.getElementById("win-meta").textContent =
+          "Not in this release yet — ask us for a build";
+        winCard.style.opacity = "0.6";
+      }
+    })
+    .catch(function () { /* the baked-in values stand */ });
+
+  /*
+   * The timeline, from the releases themselves.
+   *
+   * Same principle as the version line: history that has to be hand-edited
+   * stops being edited. Each release body is the note written in the changelog
+   * and copied into the release, so this stays in step with both without a
+   * third copy to keep honest.
+   *
+   * Rendered as text, never as HTML — a release body is markdown someone typed,
+   * and putting it through innerHTML would make the page's contents editable by
+   * anyone who can publish a release.
+   */
+  /*
+   * Ask for far more than we show, then sort by date ourselves.
+   *
+   * GitHub does NOT return releases newest-first. Measured on this repo, the
+   * default order came back 13, 9, 8, 7, 6, 5, 12, 11, 10 — so taking the first
+   * six produced a timeline that looked perfectly plausible and silently
+   * omitted three versions. A history with holes in it is worse than no
+   * history, because nothing about it looks wrong.
+   */
+  fetch("https://api.github.com/repos/" + REPO + "/releases?per_page=30")
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (all) {
+      if (!all.length) return;
+      var rels = all
+        .filter(function (r) { return !r.draft; })
+        .sort(function (a, b) {
+          return new Date(b.published_at) - new Date(a.published_at);
+        })
+        .slice(0, 6);
+      var list = document.getElementById("timeline");
+      list.textContent = "";
+      rels.forEach(function (rel) {
+        var li = document.createElement("li");
+
+        var v = document.createElement("span");
+        v.className = "tl-version";
+        v.textContent = rel.tag_name.replace(/^v/, "");
+
+        var d = document.createElement("span");
+        d.className = "tl-date";
+        d.textContent = new Date(rel.published_at).toLocaleDateString(undefined, {
+          day: "numeric", month: "long", year: "numeric",
+        });
+
+        var p = document.createElement("p");
+        // Release bodies carry a macOS/Windows asset footer that repeats what
+        // the download cards already say. The notes are the first paragraph.
+        p.textContent = (rel.body || "").split(/\n\s*\n/)[0].trim();
+
+        li.appendChild(v);
+        li.appendChild(d);
+        if (p.textContent) li.appendChild(p);
+        list.appendChild(li);
+      });
+    })
+    .catch(function () { /* the fallback node stands */ });
+})();
+</script>
+</body>
+</html>
