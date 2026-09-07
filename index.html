@@ -257,7 +257,7 @@
   </p>
 
   <div class="downloads" id="downloads">
-    <a class="dl" id="dl-mac" href="https://github.com/fly-magpie/magpie-v3-desktop-releases/releases/latest">
+    <a class="dl" id="dl-mac" href="https://github.com/fly-magpie/magpie-v3-desktop-releases/releases/latest/download/Magpie-V3.dmg">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.36 12.72c-.02-2.2 1.8-3.26 1.88-3.31-1.02-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.8-3.33.8-.69 0-1.75-.78-2.87-.76-1.48.02-2.84.86-3.6 2.18-1.53 2.66-.39 6.6 1.1 8.76.73 1.06 1.6 2.25 2.74 2.2 1.1-.04 1.51-.71 2.84-.71s1.7.71 2.87.69c1.18-.02 1.93-1.08 2.65-2.14.84-1.23 1.18-2.42 1.2-2.48-.03-.01-2.3-.88-2.3-3.51zM14.2 6.1c.6-.74 1.01-1.76.9-2.78-.87.04-1.93.58-2.55 1.31-.56.65-1.05 1.69-.92 2.68.97.08 1.96-.49 2.57-1.21z"/></svg>
       <span class="dl-body">
         <span class="dl-title">Download for Mac</span><br />
@@ -336,11 +336,10 @@
     <h2>What's changed</h2>
     <ol class="timeline" id="timeline">
       <li>
-        <span class="tl-version">1.0.0-beta.13</span>
-        <span class="tl-date">15 August 2026</span>
+        <span class="tl-version">0.1.0-beta.1</span>
+        <span class="tl-date">7 September 2026</span>
         <p>
-          Ideas have somewhere to live, Home keeps itself up to date as things
-          happen, and Just arrived is one stack with the newest message on top.
+          First Magpie V3 desktop app: tray, updater, and system-browser Outlook.
         </p>
       </li>
     </ol>
@@ -413,7 +412,11 @@
     .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function (rel) {
       var assets = rel.assets || [];
-      var dmg = assets.filter(function (a) { return /\.dmg$/i.test(a.name); })[0];
+      var dmg = assets.filter(function (a) {
+        return /^Magpie-V3\.dmg$/i.test(a.name);
+      })[0] || assets.filter(function (a) {
+        return /\.dmg$/i.test(a.name) && /magpie/i.test(a.name);
+      })[0];
       var exe = assets.filter(function (a) { return /\.exe$/i.test(a.name); })[0];
 
       var when = new Date(rel.published_at).toLocaleDateString(undefined, {
